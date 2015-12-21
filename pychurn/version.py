@@ -2,6 +2,7 @@
 
 import re
 import ast
+import fnmatch
 import itertools
 import collections
 
@@ -26,7 +27,16 @@ def parse_diff(diff):
 
 Change = collections.namedtuple('Change', ['file', 'type', 'name', 'parent'])
 
-def get_churn(path, since=None, until=None):
+def match(path, patterns):
+    return any(fnmatch.fnmatch(path, pattern) for pattern in patterns)
+
+def check_path(path, include=(), exclude=()):
+    return (
+        (not include or match(path, include)) and
+        not match(path, exclude)
+    )
+
+def get_churn(path, since=None, until=None, include=(), exclude=()):
     repo = git.Repo(path)
     opts = {
         'min_parents': 1,
@@ -38,6 +48,8 @@ def get_churn(path, since=None, until=None):
     for commit in repo.iter_commits(**opts):
         diffs = commit.parents[0].diff(commit, create_patch=True, unified=0)
         for diff in diffs:
+            if not check_path(diff.b_path, include, exclude):
+                continue
             changes = parse_diff(diff)
             try:
                 source = repo.git.show('{}:{}'.format(commit.hexsha, diff.b_path))

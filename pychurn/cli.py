@@ -15,10 +15,12 @@ def format_change(change):
 
 @click.command()
 @click.option('--path', default='.', type=click.Path())
+@click.option('--include', multiple=True)
+@click.option('--exclude', multiple=True)
 @click.option('--since')
 @click.option('--until')
-def churn(path, since, until):
-    changes = get_churn(path=path, since=since, until=until)
+def churn(**kwargs):
+    changes = get_churn(**kwargs)
     counts = collections.Counter(changes)
     table = [
         (format_change(change), count)
