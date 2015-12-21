@@ -26,9 +26,16 @@ def parse_diff(diff):
 
 Change = collections.namedtuple('Change', ['file', 'type', 'name', 'parent'])
 
-def get_churn(path, since, until):
+def get_churn(path, since=None, until=None):
     repo = git.Repo(path)
-    for commit in repo.iter_commits(since=since, until=until, no_merges=True):
+    opts = {
+        'min_parents': 1,
+        'max_parents': 1,
+        'since': since,
+        'until': until,
+    }
+    opts = {key: value for key, value in opts.items() if value is not None}
+    for commit in repo.iter_commits(**opts):
         diffs = commit.parents[0].diff(commit, create_patch=True, unified=0)
         for diff in diffs:
             changes = parse_diff(diff)
