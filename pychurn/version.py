@@ -2,12 +2,13 @@
 
 import re
 import ast
-import fnmatch
+import types
 import itertools
 import collections
 
 import git
 
+import utils
 from parse import ChurnVisitor
 
 pattern = re.compile(r'(?P<op>[+-])(?P<start>\d+)(?:,(?P<count>\d+))? @@')
@@ -25,16 +26,13 @@ def parse_diff_lines(diff):
 def parse_diff(diff):
     return set(itertools.chain.from_iterable(parse_diff_lines(diff)))
 
+def get_type(node):
+    if isinstance(node, ast.ClassDef):
+        return type
+    assert isinstance(node, ast.FunctionDef)
+    return types.MethodType if node.parent else types.FunctionType
+
 Change = collections.namedtuple('Change', ['file', 'type', 'name', 'parent'])
-
-def match(path, patterns):
-    return any(fnmatch.fnmatch(path, pattern) for pattern in patterns)
-
-def check_path(path, include=(), exclude=()):
-    return (
-        (not include or match(path, include)) and
-        not match(path, exclude)
-    )
 
 def get_churn(path, since=None, until=None, include=(), exclude=()):
     repo = git.Repo(path)
@@ -48,7 +46,7 @@ def get_churn(path, since=None, until=None, include=(), exclude=()):
     for commit in repo.iter_commits(**opts):
         diffs = commit.parents[0].diff(commit, create_patch=True, unified=0)
         for diff in diffs:
-            if not check_path(diff.b_path, include, exclude):
+            if not utils.check_path(diff.b_path, include, exclude):
                 continue
             changes = parse_diff(diff)
             try:
@@ -63,7 +61,7 @@ def get_churn(path, since=None, until=None, include=(), exclude=()):
                 if changes.intersection(range(node.lineno, node.lineno_end)):
                     yield Change(
                         diff.b_path,
-                        type(node),
+                        get_type(node),
                         node.name,
                         node.parent.name if node.parent else None,
                     )
