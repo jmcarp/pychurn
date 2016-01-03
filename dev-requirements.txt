@@ -1,0 +1,12 @@
+# Build tasks
+invoke
+
+# Testing
+flake8
+pytest
+pytest-cov
+tox
+
+# Packaging
+wheel
+twine

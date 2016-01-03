@@ -5,7 +5,7 @@ import collections
 import click
 import tabulate
 
-from version import get_churn
+from pychurn.version import get_churn
 
 def format_change(change):
     parts = [change.file, change.name]
@@ -13,7 +13,11 @@ def format_change(change):
         parts.insert(1, change.parent)
     return ':'.join(parts)
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+@cli.command()
 @click.option('--path', default='.', type=click.Path())
 @click.option('--include', multiple=True)
 @click.option('--exclude', multiple=True)
@@ -27,6 +31,3 @@ def churn(**kwargs):
         for change, count in counts.most_common(20)
     ]
     print(tabulate.tabulate(table, headers=('code', 'count')))
-
-if __name__ == '__main__':
-    churn()

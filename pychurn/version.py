@@ -8,8 +8,8 @@ import collections
 
 import git
 
-import utils
-from parse import ChurnVisitor
+from pychurn import utils
+from pychurn.parse import ChurnVisitor
 
 pattern = re.compile(r'(?P<op>[+-])(?P<start>\d+)(?:,(?P<count>\d+))? @@')
 
