@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
 import types
 
 import git
@@ -8,20 +7,33 @@ import radon.complexity
 
 from pychurn import utils
 
-def get_complexity(path, include=(), exclude=()):
+def get_complexity(path, until=None, include=(), exclude=()):
     repo = git.Repo(path)
-    for _, blob in repo.index.iter_blobs():
+    params = utils.filter_items(lambda x: x, until=until)
+    commits = repo.iter_commits(**params)
+    commit = next(commits)
+    for blob in utils.iter_blobs(commit.tree):
         if not utils.check_path(blob.name, include, exclude):
             continue
-        with open(os.path.join(path, blob.path)) as fp:
-            source = fp.read()
+        source = utils.git_show(repo, commit, blob.path)
+        if source is None:
+            continue
         try:
             visitor = radon.complexity.ComplexityVisitor.from_code(source)
-        except (SyntaxError):
+        except SyntaxError:
             continue
         for node in visitor.classes:
-            yield ((blob.path, type, node.name, None), node.complexity)
+            yield (
+                utils.Node(blob.path, type, node.name, None),
+                node.complexity,
+            )
             for child in visitor.functions:
-                yield ((blob.path, types.MethodType, child.name, node.name), child.complexity)
+                yield (
+                    utils.Node(blob.path, types.MethodType, child.name, node.name),
+                    child.complexity,
+                )
         for node in visitor.functions:
-            yield ((blob.path, types.FunctionType, node.name, None), node.complexity)
+            yield (
+                utils.Node(blob.path, types.FunctionType, node.name, None),
+                node.complexity,
+            )

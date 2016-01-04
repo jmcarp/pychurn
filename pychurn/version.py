@@ -4,7 +4,6 @@ import re
 import ast
 import types
 import itertools
-import collections
 
 import git
 
@@ -32,8 +31,6 @@ def get_type(node):
     assert isinstance(node, ast.FunctionDef)
     return types.MethodType if node.parent else types.FunctionType
 
-Change = collections.namedtuple('Change', ['file', 'type', 'name', 'parent'])
-
 def get_churn(path, since=None, until=None, include=(), exclude=()):
     repo = git.Repo(path)
     opts = {
@@ -49,9 +46,8 @@ def get_churn(path, since=None, until=None, include=(), exclude=()):
             if not utils.check_path(diff.b_path, include, exclude):
                 continue
             changes = parse_diff(diff)
-            try:
-                source = repo.git.show('{}:{}'.format(commit.hexsha, diff.b_path))
-            except (git.GitCommandError, UnicodeDecodeError):
+            source = utils.git_show(repo, commit, diff.b_path)
+            if source is None:
                 continue
             try:
                 parsed = ast.parse(source)
@@ -59,7 +55,7 @@ def get_churn(path, since=None, until=None, include=(), exclude=()):
                 continue
             for node in ChurnVisitor.extract(parsed):
                 if changes.intersection(range(node.lineno, node.lineno_end)):
-                    yield Change(
+                    yield utils.Node(
                         diff.b_path,
                         get_type(node),
                         node.name,
