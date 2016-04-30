@@ -13,7 +13,7 @@ from pychurn.parse import ChurnVisitor
 pattern = re.compile(r'(?P<op>[+-])(?P<start>\d+)(?:,(?P<count>\d+))? @@')
 
 def parse_diff_lines(diff):
-    for line in diff.diff.decode().splitlines():
+    for line in utils.decode(diff.diff).splitlines():
         if not line.startswith('@@'):
             continue
         match = pattern.search(line)

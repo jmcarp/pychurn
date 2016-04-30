@@ -1,9 +1,16 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# encoding: utf-8
 
+import sys
 import collections
 
 import click
 import tabulate
+
+try:
+    import ipdb as debugger
+except ImportError:
+    import pdb as debugger
 
 from pychurn.version import get_churn
 from pychurn.complexity import get_complexity
@@ -15,8 +22,12 @@ def format_change(change):
     return ':'.join(parts)
 
 @click.group()
-def cli():
-    pass
+@click.option('--debug/--no-debug', default=False)
+def cli(debug):
+    if debug:
+        def hook(exc_type, exc_value, exc_tb):
+            debugger.post_mortem(exc_tb)
+        sys.excepthook = hook
 
 @cli.command()
 @click.option('--path', default='.', type=click.Path())
@@ -77,3 +88,6 @@ def report(**kwargs):
         for change, churn, complexity in merged[:count]
     ]
     print(tabulate.tabulate(table, headers=('code', 'churn', 'complexity')))
+
+if __name__ == '__main__':
+    cli()

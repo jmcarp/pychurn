@@ -25,7 +25,7 @@ def get_complexity(path, until=None, include=(), exclude=()):
         for node in visitor.classes:
             yield (
                 utils.Node(blob.path, type, node.name, None),
-                node.complexity,
+                node.real_complexity,
             )
             for child in visitor.functions:
                 yield (

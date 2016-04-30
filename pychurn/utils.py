@@ -37,3 +37,9 @@ def git_show(repo, ref, path):
         return repo.git.show('{}:{}'.format(ref.hexsha, path))
     except (git.GitCommandError, UnicodeDecodeError):
         return None
+
+def decode(value, encoding='utf-8'):
+    try:
+        return value.decode(encoding)
+    except AttributeError:
+        return value
