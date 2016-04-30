@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import sys
+import functools
 import collections
 
 import click
@@ -21,6 +22,24 @@ def format_change(change):
         parts.insert(1, change.parent)
     return ':'.join(parts)
 
+def apply_options(options, *keys):
+    def wrapper(func):
+        return functools.reduce(lambda memo, val: options[val](memo), keys, func)
+    return wrapper
+
+options = {
+    'path': click.option(
+        '--path', default='.', type=click.Path(), help='Path to git repo'),
+    'sort': click.option(
+        '--sort', default='churn', type=click.Choice(['churn', 'complexity']),
+        help='Sort attribute'),
+    'count': click.option('--count', default=20, type=click.INT, help='Max row count'),
+    'include': click.option('--include', multiple=True, help='Include glob pattern'),
+    'exclude': click.option('--exclude', multiple=True, help='Exclude glob pattern'),
+    'since': click.option('--since', help='Begin commit date range'),
+    'until': click.option('--until', help='End commit date range'),
+}
+
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 def cli(debug):
@@ -30,11 +49,7 @@ def cli(debug):
         sys.excepthook = hook
 
 @cli.command()
-@click.option('--path', default='.', type=click.Path())
-@click.option('--include', multiple=True)
-@click.option('--exclude', multiple=True)
-@click.option('--since')
-@click.option('--until')
+@apply_options(options, 'path', 'include', 'exclude', 'since', 'until')
 def churn(**kwargs):
     changes = get_churn(**kwargs)
     counts = collections.Counter(changes)
@@ -45,10 +60,7 @@ def churn(**kwargs):
     print(tabulate.tabulate(table, headers=('code', 'count')))
 
 @cli.command()
-@click.option('--path', default='.', type=click.Path())
-@click.option('--include', multiple=True)
-@click.option('--exclude', multiple=True)
-@click.option('--until')
+@apply_options(options, 'path', 'include', 'exclude', 'until')
 def complexity(**kwargs):
     results = sorted(
         get_complexity(**kwargs),
@@ -62,13 +74,7 @@ def complexity(**kwargs):
     print(tabulate.tabulate(table, headers=('code', 'complexity')))
 
 @cli.command()
-@click.option('--path', default='.', type=click.Path())
-@click.option('--sort', default='churn', type=click.Choice(['churn', 'complexity']))
-@click.option('--count', default=20, type=click.INT)
-@click.option('--include', multiple=True)
-@click.option('--exclude', multiple=True)
-@click.option('--since')
-@click.option('--until')
+@apply_options(options, 'path', 'sort', 'count', 'include', 'exclude', 'since', 'until')
 def report(**kwargs):
     sort, count, since = kwargs.pop('sort'), kwargs.pop('count'), kwargs.pop('since')
     changes = get_churn(since=since, **kwargs)
