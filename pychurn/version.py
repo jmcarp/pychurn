@@ -54,7 +54,7 @@ def get_churn(path, since=None, until=None, include=(), exclude=()):
             except SyntaxError:
                 continue
             for node in ChurnVisitor.extract(parsed):
-                if changes.intersection(range(node.lineno, node.lineno_end)):
+                if changes.intersection(range(node.lineno, node.lineno_end + 1)):
                     yield utils.Node(
                         diff.b_path,
                         get_type(node),
