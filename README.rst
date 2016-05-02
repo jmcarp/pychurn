@@ -2,6 +2,10 @@
 pychurn
 =======
 
+.. image:: https://img.shields.io/travis/jmcarp/pychurn/master.svg
+    :target: https://travis-ci.org/jmcarp/pychurn
+    :alt: Travis-CI
+
 Installation
 ------------
 
