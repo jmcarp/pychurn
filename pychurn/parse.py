@@ -30,13 +30,13 @@ class ChurnVisitor(ast.NodeVisitor):
 def get_lineno_end(node):
     return max(
         child.lineno
-        for child in iter_child_nodes_rec(node)
+        for child in iter_terminal(node)
         if hasattr(child, 'lineno')
     )
 
-def iter_child_nodes_rec(node):
-    for child in ast.iter_child_nodes(node):
-        yield child
-        for grandchild in iter_child_nodes_rec(child):
+def iter_terminal(node):
+    children = list(ast.iter_child_nodes(node))
+    if children:
+        yield children[-1]
+        for grandchild in iter_terminal(children[-1]):
             yield grandchild
-
