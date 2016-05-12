@@ -13,6 +13,8 @@ Installation
 
     pip install -U pychurn
 
+pychurn will use the `pygit2` bindings for `libgit2` if available, which significantly improves performance. To install, see the `libgit2 docs <http://www.pygit2.org/install.html>`_.
+
 Usage
 -----
 
