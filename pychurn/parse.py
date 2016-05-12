@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import ast
+import types
+import collections
 
 class ChurnVisitor(ast.NodeVisitor):
 
-    def __init__(self):
+    def __init__(self, path, changes):
+        self.path = path
+        self.changes = changes
         self.nodes = []
 
     def visit_FunctionDef(self, node, parent=None):
@@ -19,11 +23,19 @@ class ChurnVisitor(ast.NodeVisitor):
     def report(self, node, parent=None):
         node.parent = parent
         node.lineno_end = get_lineno_end(node)
-        self.nodes.append(node)
+        if self.changes.intersection(range(node.lineno, node.lineno_end + 1)):
+            self.nodes.append(
+                Node(
+                    self.path,
+                    get_type(node),
+                    node.name,
+                    node.parent.name if parent else None,
+                )
+            )
 
     @classmethod
-    def extract(cls, node):
-        instance = cls()
+    def extract(cls, path, node, changes):
+        instance = cls(path, changes)
         instance.visit(node)
         return instance.nodes
 
@@ -40,3 +52,14 @@ def iter_terminal(node):
         yield children[-1]
         for grandchild in iter_terminal(children[-1]):
             yield grandchild
+
+Node = collections.namedtuple(
+    'Node',
+    ['file', 'type', 'name', 'parent'],
+)
+
+def get_type(node):
+    if isinstance(node, ast.ClassDef):
+        return type
+    assert isinstance(node, ast.FunctionDef)
+    return types.MethodType if node.parent else types.FunctionType

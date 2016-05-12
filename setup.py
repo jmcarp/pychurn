@@ -5,6 +5,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 REQUIRES = [
+    'six',
     'click',
     'radon',
     'tabulate',

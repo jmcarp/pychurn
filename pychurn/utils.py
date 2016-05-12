@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import re
 import fnmatch
-import collections
 
 import git
-
-Node = collections.namedtuple(
-    'Node',
-    ['file', 'type', 'name', 'parent'],
-)
 
 def match(path, patterns):
     return any(fnmatch.fnmatch(path, pattern) for pattern in patterns)
@@ -43,3 +38,24 @@ def decode(value, encoding='utf-8'):
         return value.decode(encoding)
     except AttributeError:
         return value
+
+DIFF_RANGE = re.compile(
+    r'''
+        @@\s
+        (?P<a_op>[+-])(?P<a_start>\d+)(?:,(?P<a_count>\d+))?
+        \s
+        (?P<b_op>[+-])(?P<b_start>\d+)(?:,(?P<b_count>\d+))?
+        \s@@
+    ''',
+    re.VERBOSE,
+)
+
+def diff_lines(lines):
+    for line in lines:
+        match = DIFF_RANGE.search(line)
+        if match:
+            params = match.groupdict()
+            start = int(params['b_start'])
+            count = int(params['b_count'] or '1') or 1
+            for line in range(start, start + count):
+                yield line

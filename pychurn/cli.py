@@ -13,7 +13,11 @@ try:
 except ImportError:
     import pdb as debugger
 
-from pychurn.version import get_churn
+try:
+    from pychurn.gitsource.libgitsource import LibGitSource as GitSource
+except:
+    from pychurn.gitsource.pygitsource import PyGitSource as GitSource
+
 from pychurn.complexity import get_complexity
 
 def format_change(change):
@@ -51,7 +55,7 @@ def cli(debug):
 @cli.command()
 @apply_options(options, 'path', 'include', 'exclude', 'since', 'until')
 def churn(**kwargs):
-    changes = get_churn(**kwargs)
+    changes = GitSource(**kwargs).churn()
     counts = collections.Counter(changes)
     table = [
         (format_change(change), count)
@@ -77,7 +81,7 @@ def complexity(**kwargs):
 @apply_options(options, 'path', 'sort', 'count', 'include', 'exclude', 'since', 'until')
 def report(**kwargs):
     sort, count, since = kwargs.pop('sort'), kwargs.pop('count'), kwargs.pop('since')
-    changes = get_churn(since=since, **kwargs)
+    changes = GitSource(since=since, **kwargs).churn()
     counts = collections.Counter(changes)
     scores = dict(get_complexity(**kwargs))
     keys = set(counts.keys()) | set(scores.keys())
