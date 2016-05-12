@@ -1,3 +1,5 @@
+pygit2
+
 # Build tasks
 invoke
 

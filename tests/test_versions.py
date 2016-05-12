@@ -81,7 +81,7 @@ def test_churn(klass, repo):
 ])
 def test_churn_since_date(klass, repo):
     commits = list(repo.iter_commits())
-    since = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(commits[1].committed_date))
+    since = time.strftime('%Y-%m-%d', time.gmtime(commits[1].committed_date))
     nodes = list(klass(repo.working_dir, since=since).churn())
     expected = [
         parse.Node(file='module.py', type=types.FunctionType, name='func', parent=None),

@@ -9,6 +9,20 @@ python:
   - "3.5"
   - "pypy"
 
+env:
+  global:
+    - LIBGIT2=$HOME/libgit2/_install/
+    - LD_LIBRARY_PATH=$HOME/libgit2/_install/lib
+
+before_install:
+  - cd $HOME
+  - git clone --depth=1 -b maint/v0.24 https://github.com/libgit2/libgit2.git
+  - cd libgit2
+  - mkdir build && cd build
+  - cmake .. -DCMAKE_INSTALL_PREFIX=../_install -DBUILD_CLAR=OFF
+  - cmake --build . --target install
+  - cd $TRAVIS_BUILD_DIR
+
 install:
   - travis_retry pip install -U .
   - travis_retry pip install -U -r dev-requirements.txt

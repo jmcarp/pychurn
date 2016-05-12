@@ -7,6 +7,7 @@ from setuptools import find_packages
 REQUIRES = [
     'six',
     'click',
+    'python-dateutil',
     'radon',
     'tabulate',
     'GitPython',
